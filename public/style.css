@@ -412,6 +412,43 @@ td.total-cell { font-weight: 700; color: #2c3e6b; font-size: 1.05rem; }
 
 .modal-buttons button.danger:hover { background: #8a1f15; }
 
+.counter-modal-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.cm-btn {
+  width: 3.2rem;
+  height: 3.2rem;
+  font-size: 1.7rem;
+  font-weight: 700;
+  border: 2px solid #2c3e6b;
+  background: white;
+  color: #2c3e6b;
+  border-radius: 50%;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cm-btn:hover, .cm-btn:active { background: #2c3e6b; color: white; }
+
+.cm-count {
+  font-size: 2rem;
+  font-weight: 700;
+  min-width: 5.5rem;
+  text-align: center;
+}
+
 .ext-pick-buttons {
   display: flex;
   gap: 0.75rem;

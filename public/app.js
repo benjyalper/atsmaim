@@ -134,6 +134,63 @@ function promptDate(title, initial) {
   });
 }
 
+function showCounterModal(p) {
+  return new Promise(resolve => {
+    function bodyHtml() {
+      const total = totalSessions(p);
+      const cls = counterColor(p.sessionsDone, total);
+      return `
+        <h3>${escapeHtml(p.name)}</h3>
+        <div class="counter-modal-body">
+          <button type="button" class="cm-btn" data-act="dec">−</button>
+          <span class="cm-count count ${cls}">${p.sessionsDone}/${total}</span>
+          <button type="button" class="cm-btn" data-act="inc">+</button>
+        </div>
+        <div class="modal-buttons">
+          <button data-act="rename">שינוי שם</button>
+          <button class="primary" data-act="close">סגור</button>
+        </div>
+      `;
+    }
+    const modal = showModal(bodyHtml());
+    const inner = modal.querySelector('.modal');
+    function rerender() { inner.innerHTML = bodyHtml(); }
+    inner.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      const act = btn.dataset.act;
+      if (act === 'inc') {
+        p.sessionsDone += 1;
+        rerender();
+        render();
+        try { await api.delta(p.id, 1); }
+        catch { p.sessionsDone -= 1; rerender(); render(); }
+      } else if (act === 'dec') {
+        if (p.sessionsDone <= 0) return;
+        p.sessionsDone -= 1;
+        rerender();
+        render();
+        try { await api.delta(p.id, -1); }
+        catch { p.sessionsDone += 1; rerender(); render(); }
+      } else if (act === 'rename') {
+        modal.remove();
+        const newName = await promptText('שם המטופל', p.name);
+        if (newName !== null && newName.trim()) {
+          const oldName = p.name;
+          p.name = newName.trim();
+          render();
+          try { await api.update(p.id, { name: p.name }); }
+          catch { p.name = oldName; render(); }
+        }
+        resolve();
+      } else if (act === 'close') {
+        modal.remove();
+        resolve();
+      }
+    });
+  });
+}
+
 function confirm2(message) {
   return new Promise(resolve => {
     const modal = showModal(`
@@ -175,7 +232,7 @@ function renderRow(p) {
   const done = p.sessionsDone;
   const colorCls = counterColor(done, total);
   return `<tr data-id="${p.id}">
-    <td class="editable name-cell name-${colorCls}" data-action="edit-name">${escapeHtml(p.name)}</td>
+    <td class="editable name-cell name-${colorCls}" data-action="name-click">${escapeHtml(p.name)}</td>
     <td class="editable" data-action="edit-date">${fmtDate(p.startDate)}</td>
     ${renderExtCell(p, 'A')}
     ${renderExtCell(p, 'B')}
@@ -247,21 +304,21 @@ function setupApp() {
     const action = target.dataset.action;
 
     if (action === 'inc') {
-      await api.delta(id, 1);
-      await refresh();
+      p.sessionsDone += 1;
+      render();
+      try { await api.delta(id, 1); }
+      catch { p.sessionsDone -= 1; render(); }
     } else if (action === 'dec') {
       if (p.sessionsDone <= 0) return;
-      await api.delta(id, -1);
-      await refresh();
+      p.sessionsDone -= 1;
+      render();
+      try { await api.delta(id, -1); }
+      catch { p.sessionsDone += 1; render(); }
     } else if (action === 'delete') {
       const ok = await confirm2('למחוק את ' + p.name + '?');
       if (ok) { await api.remove(id); await refresh(); }
-    } else if (action === 'edit-name') {
-      const newName = await promptText('שם המטופל', p.name);
-      if (newName !== null && newName.trim()) {
-        await api.update(id, { name: newName.trim() });
-        await refresh();
-      }
+    } else if (action === 'name-click') {
+      await showCounterModal(p);
     } else if (action === 'edit-date') {
       const newDate = await promptDate('תאריך תחילת טיפול', p.startDate);
       if (newDate !== null && newDate) {
