@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>atsmaim</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="auth-screen" class="auth-screen hidden">
+  <div class="auth-card">
+    <h1>atsmaim</h1>
+    <div class="auth-tabs">
+      <button class="tab active" data-tab="login" type="button">התחברות</button>
+      <button class="tab" data-tab="signup" type="button">הרשמה</button>
+    </div>
+    <form id="login-form" class="auth-form active">
+      <input name="username" type="text" placeholder="שם משתמש" autocomplete="username" required />
+      <input name="password" type="password" placeholder="סיסמה" autocomplete="current-password" required />
+      <button type="submit">התחבר</button>
+      <div class="auth-error" id="login-error"></div>
+    </form>
+    <form id="signup-form" class="auth-form">
+      <input name="username" type="text" placeholder="שם משתמש" autocomplete="username" required />
+      <input name="password" type="password" placeholder="סיסמה" autocomplete="new-password" required />
+      <input name="code" type="text" placeholder="קוד הרשמה (אם נדרש)" />
+      <button type="submit">צור חשבון</button>
+      <div class="auth-error" id="signup-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="app-screen" class="hidden">
+  <header>
+    <h1>atsmaim</h1>
+    <div class="user-info">
+      <span id="username-label"></span>
+      <button id="logout-btn" type="button">התנתק</button>
+    </div>
+  </header>
+  <main>
+    <section class="add-form">
+      <input id="new-name" type="text" placeholder="שם המטופל" />
+      <input id="new-date" type="date" />
+      <button id="add-btn" type="button">הוסף מטופל</button>
+    </section>
+    <div class="table-wrap">
+      <table id="patients-table">
+        <thead>
+          <tr>
+            <th rowspan="2">שם המטופל</th>
+            <th rowspan="2">תאריך תחילת טיפול</th>
+            <th colspan="4">הארכה</th>
+            <th rowspan="2">מספר פגישות עד כה</th>
+            <th rowspan="2"></th>
+          </tr>
+          <tr>
+            <th>א'</th>
+            <th>ב'</th>
+            <th>ג'</th>
+            <th>סה"כ</th>
+          </tr>
+        </thead>
+        <tbody id="patients-body"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div id="modal-root"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
