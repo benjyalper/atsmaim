@@ -175,7 +175,7 @@ function renderRow(p) {
   const done = p.sessionsDone;
   const colorCls = counterColor(done, total);
   return `<tr data-id="${p.id}">
-    <td class="editable" data-action="edit-name">${escapeHtml(p.name)}</td>
+    <td class="editable name-cell name-${colorCls}" data-action="edit-name">${escapeHtml(p.name)}</td>
     <td class="editable" data-action="edit-date">${fmtDate(p.startDate)}</td>
     ${renderExtCell(p, 'A')}
     ${renderExtCell(p, 'B')}
