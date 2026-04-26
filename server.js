@@ -179,7 +179,7 @@ app.patch('/api/patients/:id', requireAuth, async (req, res) => {
     if (ext === null) {
       fields.push(`ext_${lo}_sessions = NULL`, `ext_${lo}_date = NULL`);
     } else {
-      if (![15, 35].includes(ext.sessions)) return res.status(400).json({ error: 'ext sessions must be 15 or 35' });
+      if (![15, 30, 35].includes(ext.sessions)) return res.status(400).json({ error: 'ext sessions must be 15, 30 or 35' });
       fields.push(`ext_${lo}_sessions = $${i++}`);
       values.push(ext.sessions);
       fields.push(`ext_${lo}_date = $${i++}`);

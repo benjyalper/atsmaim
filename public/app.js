@@ -60,6 +60,7 @@ function pickExtension(currentSessions, hasValue) {
       <h3>בחר מספר פגישות</h3>
       <div class="ext-pick-buttons">
         <button data-pick="15">15 פגישות</button>
+        <button data-pick="30">30 פגישות</button>
         <button data-pick="35">35 פגישות</button>
       </div>
       <div class="modal-buttons">
