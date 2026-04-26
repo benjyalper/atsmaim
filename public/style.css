@@ -256,8 +256,8 @@ td.editable { cursor: pointer; }
 td.editable:hover { background: #e6ecff; }
 
 td.name-cell { font-weight: 600; }
-td.name-cell.name-blue { background: #dde6ff; color: #1a3a8a; }
-td.name-cell.name-blue:hover { background: #c9d6ff; }
+td.name-cell.name-green { background: #d4f0d8; color: #1a6a2c; }
+td.name-cell.name-green:hover { background: #bce5c4; }
 td.name-cell.name-yellow { background: #fff0b8; color: #8a5e00; }
 td.name-cell.name-yellow:hover { background: #ffe48a; }
 td.name-cell.name-red { background: #ffd0cc; color: #8a1f15; }
@@ -315,7 +315,7 @@ td.total-cell { font-weight: 700; color: #2c3e6b; font-size: 1.05rem; }
   font-size: 1rem;
 }
 
-.counter .count.blue { color: #1a3a8a; }
+.counter .count.green { color: #1a6a2c; }
 .counter .count.yellow { color: #c8941a; }
 .counter .count.red { color: #c0392b; }
 

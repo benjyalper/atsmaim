@@ -39,7 +39,7 @@ function counterColor(done, total) {
   const remaining = total - done;
   if (remaining <= 3) return 'red';
   if (remaining <= 6) return 'yellow';
-  return 'blue';
+  return 'green';
 }
 
 /* ===== Modal helpers ===== */
