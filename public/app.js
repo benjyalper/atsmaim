@@ -108,13 +108,20 @@ function promptDate(title, initial) {
   return new Promise(resolve => {
     const modal = showModal(`
       <h3>${escapeHtml(title)}</h3>
-      <input type="date" id="modal-date" lang="he-IL" value="${initial || ''}" />
+      <label class="date-field">
+        <input type="date" id="modal-date" lang="he-IL" value="${initial || ''}" />
+        <span class="date-overlay" id="modal-date-display">${fmtDate(initial) || '—'}</span>
+      </label>
       <div class="modal-buttons">
         <button class="primary" data-act="ok">אישור</button>
         <button data-act="cancel">ביטול</button>
       </div>
     `);
     const input = modal.querySelector('#modal-date');
+    const display = modal.querySelector('#modal-date-display');
+    input.addEventListener('input', () => {
+      display.textContent = fmtDate(input.value) || '—';
+    });
     setTimeout(() => input.focus(), 50);
     modal.addEventListener('click', e => {
       const a = e.target.dataset && e.target.dataset.act;
@@ -266,15 +273,22 @@ function setupApp() {
     }
   });
 
+  const newDateInput = document.getElementById('new-date');
+  const newDateDisplay = document.getElementById('new-date-display');
+  function syncNewDateDisplay() {
+    newDateDisplay.textContent = fmtDate(newDateInput.value) || '—';
+  }
+  newDateInput.addEventListener('input', syncNewDateDisplay);
+
   document.getElementById('add-btn').addEventListener('click', async () => {
     const nameInput = document.getElementById('new-name');
-    const dateInput = document.getElementById('new-date');
     const name = nameInput.value.trim();
     if (!name) { nameInput.focus(); return; }
-    const startDate = dateInput.value || todayIso();
+    const startDate = newDateInput.value || todayIso();
     await api.create({ name, startDate });
     nameInput.value = '';
-    dateInput.value = todayIso();
+    newDateInput.value = todayIso();
+    syncNewDateDisplay();
     await refresh();
     nameInput.focus();
   });
@@ -288,7 +302,8 @@ function setupApp() {
     showAuth();
   });
 
-  document.getElementById('new-date').value = todayIso();
+  newDateInput.value = todayIso();
+  syncNewDateDisplay();
 }
 
 /* ===== Auth UI ===== */
