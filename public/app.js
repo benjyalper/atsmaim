@@ -108,7 +108,7 @@ function promptDate(title, initial) {
   return new Promise(resolve => {
     const modal = showModal(`
       <h3>${escapeHtml(title)}</h3>
-      <input type="date" id="modal-date" value="${initial || ''}" />
+      <input type="date" id="modal-date" lang="he-IL" value="${initial || ''}" />
       <div class="modal-buttons">
         <button class="primary" data-act="ok">אישור</button>
         <button data-act="cancel">ביטול</button>
