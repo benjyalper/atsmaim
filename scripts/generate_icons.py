@@ -32,8 +32,8 @@ def make_icon(size, out_path):
 
     draw = ImageDraw.Draw(img)
     font_path = find_font()
-    # Hebrew letter aleph
-    text = 'א'
+    # Hebrew letter ayin (first letter of עצמאיים)
+    text = 'ע'
     font_size = int(size * 0.62)
     font = ImageFont.truetype(font_path, font_size)
 
