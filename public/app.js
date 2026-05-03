@@ -9,7 +9,10 @@ const api = {
   create: (body) => fetch('/api/patients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json()),
   update: (id, body) => fetch('/api/patients/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json()),
   remove: (id) => fetch('/api/patients/' + id, { method: 'DELETE' }).then(r => r.json()),
-  delta: (id, delta) => fetch('/api/patients/' + id + '/sessions/delta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ delta }) }).then(r => r.json())
+  delta: (id, delta) => {
+    const body = delta === 1 ? { delta, lastSessionDate: todayIso() } : { delta };
+    return fetch('/api/patients/' + id + '/sessions/delta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+  }
 };
 
 let patients = [];
@@ -33,6 +36,27 @@ function fmtDate(iso) {
 
 function totalSessions(p) {
   return 10 + (p.extA ? p.extA.sessions : 0) + (p.extB ? p.extB.sessions : 0) + (p.extC ? p.extC.sessions : 0);
+}
+
+function pushSessionDate(p, date) {
+  p.sessionDates = [...(p.sessionDates || []), date];
+  p.lastSessionDate = date;
+  p.sessionsDone += 1;
+}
+
+function popSessionDate(p) {
+  const arr = p.sessionDates || [];
+  const removed = arr.length ? arr[arr.length - 1] : null;
+  p.sessionDates = arr.slice(0, -1);
+  p.lastSessionDate = p.sessionDates.length ? p.sessionDates[p.sessionDates.length - 1] : null;
+  p.sessionsDone = Math.max(0, p.sessionsDone - 1);
+  return removed;
+}
+
+function unpopSessionDate(p, date) {
+  if (date) p.sessionDates = [...(p.sessionDates || []), date];
+  p.lastSessionDate = p.sessionDates.length ? p.sessionDates[p.sessionDates.length - 1] : null;
+  p.sessionsDone += 1;
 }
 
 function counterColor(done, total) {
@@ -160,18 +184,18 @@ function showCounterModal(p) {
       if (!btn) return;
       const act = btn.dataset.act;
       if (act === 'inc') {
-        p.sessionsDone += 1;
+        pushSessionDate(p, todayIso());
         rerender();
         render();
         try { await api.delta(p.id, 1); }
-        catch { p.sessionsDone -= 1; rerender(); render(); }
+        catch { popSessionDate(p); rerender(); render(); }
       } else if (act === 'dec') {
         if (p.sessionsDone <= 0) return;
-        p.sessionsDone -= 1;
+        const removed = popSessionDate(p);
         rerender();
         render();
         try { await api.delta(p.id, -1); }
-        catch { p.sessionsDone += 1; rerender(); render(); }
+        catch { unpopSessionDate(p, removed); rerender(); render(); }
       } else if (act === 'rename') {
         modal.remove();
         const newName = await promptText('שם המטופל', p.name);
@@ -233,6 +257,7 @@ function renderRow(p) {
   const colorCls = counterColor(done, total);
   return `<tr data-id="${p.id}">
     <td class="editable name-cell name-${colorCls}" data-action="name-click">${escapeHtml(p.name)}</td>
+    <td>${fmtDate(p.lastSessionDate) || '—'}</td>
     <td class="editable" data-action="edit-date">${fmtDate(p.startDate)}</td>
     ${renderExtCell(p, 'A')}
     ${renderExtCell(p, 'B')}
@@ -304,16 +329,17 @@ function setupApp() {
     const action = target.dataset.action;
 
     if (action === 'inc') {
-      p.sessionsDone += 1;
+      const today = todayIso();
+      pushSessionDate(p, today);
       render();
       try { await api.delta(id, 1); }
-      catch { p.sessionsDone -= 1; render(); }
+      catch { popSessionDate(p); render(); }
     } else if (action === 'dec') {
       if (p.sessionsDone <= 0) return;
-      p.sessionsDone -= 1;
+      const removed = popSessionDate(p);
       render();
       try { await api.delta(id, -1); }
-      catch { p.sessionsDone += 1; render(); }
+      catch { unpopSessionDate(p, removed); render(); }
     } else if (action === 'delete') {
       const ok = await confirm2('למחוק את ' + p.name + '?');
       if (ok) { await api.remove(id); await refresh(); }

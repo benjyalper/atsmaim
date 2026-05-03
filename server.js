@@ -49,8 +49,25 @@ async function init() {
       ext_c_sessions INT,
       ext_c_date DATE,
       sessions_done INT NOT NULL DEFAULT 0,
+      session_dates DATE[] NOT NULL DEFAULT ARRAY[]::DATE[],
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
+  `);
+  // migrations for existing deployments
+  await pool.query(`ALTER TABLE atsmaim.patients ADD COLUMN IF NOT EXISTS session_dates DATE[] NOT NULL DEFAULT ARRAY[]::DATE[]`);
+  // backfill session_dates from old last_session_date column, then drop it
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema='atsmaim' AND table_name='patients' AND column_name='last_session_date') THEN
+        UPDATE atsmaim.patients
+        SET session_dates = ARRAY[last_session_date]
+        WHERE last_session_date IS NOT NULL
+          AND COALESCE(array_length(session_dates, 1), 0) = 0;
+        ALTER TABLE atsmaim.patients DROP COLUMN last_session_date;
+      END IF;
+    END $$;
   `);
 }
 
@@ -68,10 +85,13 @@ function toIsoDate(v) {
 }
 
 function rowToPatient(r) {
+  const dates = (r.session_dates || []).map(toIsoDate).filter(Boolean);
   return {
     id: r.id,
     name: r.name,
     startDate: toIsoDate(r.start_date),
+    sessionDates: dates,
+    lastSessionDate: dates.length ? dates[dates.length - 1] : null,
     extA: r.ext_a_sessions ? { sessions: r.ext_a_sessions, date: toIsoDate(r.ext_a_date) } : null,
     extB: r.ext_b_sessions ? { sessions: r.ext_b_sessions, date: toIsoDate(r.ext_b_date) } : null,
     extC: r.ext_c_sessions ? { sessions: r.ext_c_sessions, date: toIsoDate(r.ext_c_date) } : null,
@@ -206,13 +226,32 @@ app.delete('/api/patients/:id', requireAuth, async (req, res) => {
 
 app.post('/api/patients/:id/sessions/delta', requireAuth, async (req, res) => {
   const delta = req.body && req.body.delta;
+  const lastSessionDate = req.body && req.body.lastSessionDate;
   if (delta !== 1 && delta !== -1) return res.status(400).json({ error: 'bad delta' });
-  const r = await pool.query(
-    `UPDATE atsmaim.patients
-     SET sessions_done = GREATEST(0, sessions_done + $1)
-     WHERE id = $2 AND user_id = $3 RETURNING *`,
-    [delta, Number(req.params.id), req.session.userId]
-  );
+  let r;
+  if (delta === 1) {
+    const date = lastSessionDate || new Date().toISOString().slice(0, 10);
+    r = await pool.query(
+      `UPDATE atsmaim.patients
+       SET sessions_done = GREATEST(0, sessions_done + 1),
+           session_dates = array_append(session_dates, $3::date)
+       WHERE id = $1 AND user_id = $2 RETURNING *`,
+      [Number(req.params.id), req.session.userId, date]
+    );
+  } else {
+    // delta === -1: pop most recent session date, decrement counter
+    r = await pool.query(
+      `UPDATE atsmaim.patients
+       SET sessions_done = GREATEST(0, sessions_done - 1),
+           session_dates = CASE
+             WHEN COALESCE(array_length(session_dates, 1), 0) > 0
+             THEN session_dates[1:array_length(session_dates, 1) - 1]
+             ELSE session_dates
+           END
+       WHERE id = $1 AND user_id = $2 RETURNING *`,
+      [Number(req.params.id), req.session.userId]
+    );
+  }
   if (!r.rows[0]) return res.status(404).json({ error: 'not found' });
   res.json(rowToPatient(r.rows[0]));
 });
