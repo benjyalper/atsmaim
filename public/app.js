@@ -215,6 +215,25 @@ function showCounterModal(p) {
   });
 }
 
+function showSessionDatesModal(p) {
+  const dates = (p.sessionDates || []).slice().reverse(); // newest first
+  if (!dates.length) return;
+  const items = dates.map((d, i) => {
+    const n = dates.length - i; // 1 = first ever
+    return `<li><span class="sd-num">פגישה ${n}</span><span class="sd-date">${fmtDate(d)}</span></li>`;
+  }).join('');
+  const modal = showModal(`
+    <h3>${escapeHtml(p.name)} — היסטוריית פגישות</h3>
+    <ul class="session-dates-list">${items}</ul>
+    <div class="modal-buttons">
+      <button class="primary" data-act="close">סגור</button>
+    </div>
+  `);
+  modal.addEventListener('click', e => {
+    if (e.target.dataset && e.target.dataset.act === 'close') modal.remove();
+  });
+}
+
 function confirm2(message) {
   return new Promise(resolve => {
     const modal = showModal(`
@@ -257,7 +276,7 @@ function renderRow(p) {
   const colorCls = counterColor(done, total);
   return `<tr data-id="${p.id}">
     <td class="editable name-cell name-${colorCls}" data-action="name-click">${escapeHtml(p.name)}</td>
-    <td>${fmtDate(p.lastSessionDate) || '—'}</td>
+    <td class="${p.sessionDates && p.sessionDates.length ? 'editable last-date-cell' : ''}" ${p.sessionDates && p.sessionDates.length ? 'data-action="show-dates"' : ''}>${fmtDate(p.lastSessionDate) || '—'}</td>
     <td class="editable" data-action="edit-date">${fmtDate(p.startDate)}</td>
     ${renderExtCell(p, 'A')}
     ${renderExtCell(p, 'B')}
@@ -345,6 +364,8 @@ function setupApp() {
       if (ok) { await api.remove(id); await refresh(); }
     } else if (action === 'name-click') {
       await showCounterModal(p);
+    } else if (action === 'show-dates') {
+      showSessionDatesModal(p);
     } else if (action === 'edit-date') {
       const newDate = await promptDate('תאריך תחילת טיפול', p.startDate);
       if (newDate !== null && newDate) {

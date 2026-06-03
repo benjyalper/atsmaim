@@ -449,6 +449,41 @@ td.total-cell { font-weight: 700; color: #2c3e6b; font-size: 1.05rem; }
   text-align: center;
 }
 
+.session-dates-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  border: 1px solid #e0e4ee;
+  border-radius: 6px;
+}
+
+.session-dates-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid #eef0f6;
+  font-size: 0.95rem;
+}
+
+.session-dates-list li:last-child { border-bottom: none; }
+.session-dates-list li:nth-child(even) { background: #f9faff; }
+
+.session-dates-list .sd-num {
+  color: #6b7390;
+  font-size: 0.85rem;
+}
+
+.session-dates-list .sd-date {
+  font-weight: 600;
+  color: #1a1f3a;
+}
+
+td.last-date-cell { cursor: pointer; }
+td.last-date-cell:hover { background: #e6ecff; }
+
 .ext-pick-buttons {
   display: flex;
   gap: 0.75rem;
